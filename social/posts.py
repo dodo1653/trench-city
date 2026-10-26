@@ -10,7 +10,7 @@ When the dev sells, the lights go out.
 Built live from the chain, every few seconds."""
 
 P['1_clip_reply'] = """Walk around it yourself, click any building to see the coin behind it:
-[site link]"""
+https://trenchcity.vercel.app"""
 
 P['2_stat'] = """We watched pump.fun for 16 minutes.
 
@@ -41,7 +41,7 @@ Click any building: market cap, holders, dev %, top 10, the last trades, straigh
 P['3_thread_5'] = """(5/5) Search any ticker or CA and fly to it.
 
 No wallet, no sign-up. Just the trenches, as a city.
-[site link]"""
+https://trenchcity.vercel.app"""
 
 P['4_trust'] = """The tower in the middle of the city is ours.
 
@@ -74,8 +74,11 @@ Here's what that looks like from the street."""
 
 P['8_question'] = """If every pump.fun launch was a building, how long would yours stay lit?"""
 
+import os
+out = []
 for k, v in P.items():
     n = len(v)
-    flag = 'OK ' if n <= 280 else 'TOO LONG'
-    print(f'--- {k}  [{n} chars] {flag}\n{v}\n')
     assert n <= 280, k
+    out.append(f'===== {k}  ({n}/280) =====\n{v}\n')
+open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'posts.txt'), 'w', encoding='utf-8').write('\n'.join(out))
+print('\n'.join(out))

@@ -1,0 +1,86 @@
+===== 1_clip  (157/280) =====
+Every building in this city is a real pump.fun coin.
+
+Buys light it up.
+When the dev sells, the lights go out.
+
+Built live from the chain, every few seconds.
+
+===== 1_clip_reply  (100/280) =====
+Walk around it yourself, click any building to see the coin behind it:
+https://trenchcity.vercel.app
+
+===== 2_stat  (183/280) =====
+We watched pump.fun for 16 minutes.
+
+129 coins launched.
+104 devs sold half their bag or more.
+The median dev sold 7 seconds after launch.
+
+In our city, you watch those lights go out.
+
+===== 2_stat_reply  (174/280) =====
+Method: every launch where the dev bought 0.1 SOL or more, tracked live from the chain. "Dev sold" = the creator's wallet sold at least half its bag. Same rule the city uses.
+
+===== 3_thread_1  (112/280) =====
+How Trench City works (1/5)
+
+Every new pump.fun coin gets a building. The more it's worth, the taller it stands.
+
+===== 3_thread_2  (141/280) =====
+(2/5) Every real buy sends a pulse of light up its tower. Big buys flare.
+
+Coins nobody trades anymore go dark slowly, like offices at night.
+
+===== 3_thread_3  (161/280) =====
+(3/5) When the dev sells, the windows black out from the top floor down.
+
+If the price breaks after that, the building sinks into dust. You watch it happen live.
+
+===== 3_thread_4  (165/280) =====
+(4/5) Coins that graduate get a lit crown and stay on the skyline.
+
+Click any building: market cap, holders, dev %, top 10, the last trades, straight from the chain.
+
+===== 3_thread_5  (128/280) =====
+(5/5) Search any ticker or CA and fly to it.
+
+No wallet, no sign-up. Just the trenches, as a city.
+https://trenchcity.vercel.app
+
+===== 4_trust  (193/280) =====
+The tower in the middle of the city is ours.
+
+Our dev wallet is on it, read live from the chain.
+If we ever sell, it goes dark like every rug around it.
+
+Same rules for us as for everyone else.
+
+===== 4_trust_reply  (166/280) =====
+The dev share will also be time-locked, with the lock linked on the site. The code is open source, so anyone can check that the city shows the chain and nothing else.
+
+===== 5_soon  (164/280) =====
+Our coin's tower already stands in the middle of the city.
+
+It's dark for now. It lights up the day we launch, and it stays lit only as long as the dev never sells.
+
+===== 6_report_template  (177/280) =====
+Trench City, last 24h
+
+[N] coins launched
+[D] devs sold ([P]%)
+Fastest exit: [S] seconds after launch
+Biggest buy: [B] SOL into $[TICKER]
+Graduated: [G]
+
+The skyline never lies.
+
+===== 7_rug_clip_template  (108/280) =====
+$[TICKER] launched at [TIME].
+
+The dev sold [S] seconds later.
+
+Here's what that looks like from the street.
+
+===== 8_question  (71/280) =====
+If every pump.fun launch was a building, how long would yours stay lit?
