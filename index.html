@@ -324,6 +324,11 @@ bmat.onBeforeCompile = (sh) => {
           float win = style < .5
             ? step(.16, f.x) * step(f.x, .84) * step(.24, f.y) * step(f.y, .82)
             : step(.04, f.x) * step(f.x, .96) * step(.30, f.y) * step(f.y, .78);
+          if (style > .5) {                                            // ribbon glazing: mullions every 0.62 and a transom line
+            float mu = fract(u / .62);
+            win *= step(.07, mu) * step(mu, .93) * (1. - step(.5, abs(f.y - .5) * 2. - .82) * .0);
+            win *= 1. - step(abs(f.y - .6), .015) * .7;
+          }
           float ground = step(y, fh);                                  // lobby floor stays lit
           float r = h21(cell + vec2(seed * 97.0 + face * 13.1, seed * 31.0));
           float on = step(r, lit) + ground * .6;
@@ -354,7 +359,7 @@ scene.add(bmesh)
 
 // red aviation lights on tall roofs
 const STROBES = 600
-const strobe = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }), STROBES)
+const strobe = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 18, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }), STROBES)
 strobe.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(STROBES * 3), 3); strobe.count = 0; strobe.frustumCulled = false
 scene.add(strobe)
 
@@ -438,17 +443,17 @@ function updateCity(T) {
   {
     const L = LM.lot, lp = landmarkParts(T), sd = LM.seed
     state.set(LM.id, { mc: lp.mc, h: lp.h, rise: 1, y0: 0, dark: lp.dark })
-    const parts = [[12, 12, Math.min(lp.h, 9), 0, 0], [7.6, 7.6, lp.h, 0, 0], [8.2, 8.2, .5, lp.h - .5, 2], [1.4, 1.4, 3 + lp.h * .18, lp.h, 2]]
+    const parts = [[13, 13, Math.min(lp.h * .5, 8), 0, 0], [9, 9, lp.h * .6, 0, 0], [7.4, 7.4, lp.h * .84, 0, 0], [5.8, 5.8, lp.h, 0, 0], [6.3, 6.3, .5, lp.h - .5, 2], [.9, .9, 3 + lp.h * .2, lp.h, 2]]
     for (const [pw, pd, ph, y, st] of parts) {
       instCoin[n] = LM
       bmesh.setMatrixAt(n, tmpM.compose(tmpV.set(L.x, y, L.z), tmpQ.identity(), tmpS.set(pw, ph, pd)))
-      aSize.setXYZ(n, pw, ph, pd); aA.setXYZW(n, sd, st === 2 ? 0 : lp.lit, st === 2 ? 1 : lp.dark, y); aB.setXYZW(n, 0, 0, lp.dark ? 0 : lp.live ? .55 : .3, lp.h); aC.setXYZW(n, 1, st, .45, 0); n++
+      aSize.setXYZ(n, pw, ph, pd); aA.setXYZW(n, sd, st === 2 ? 0 : lp.lit, st === 2 ? 1 : lp.dark, y); aB.setXYZW(n, 0, 0, lp.dark ? 0 : lp.live ? (HERO ? 1 : .55) : .3, lp.h); aC.setXYZW(n, 1, st === 2 ? 2 : 1, .93, 0); n++
     }
     // beacon: steady cool white while the dev holds, red when the dev has sold, a slow pulse before launch
-    const top = lp.h + 3 + lp.h * .18 + .3, pulse = .5 + .5 * Math.sin(T / 1000 * 1.4)
-    strobe.setMatrixAt(ns, tmpM.makeTranslation(L.x, top, L.z))
+    const top = lp.h + 3 + lp.h * .2 + .3, pulse = .5 + .5 * Math.sin(T / 1000 * 1.4)
+    strobe.setMatrixAt(ns, tmpM.compose(tmpV.set(L.x, top, L.z), tmpQ.identity(), tmpS.setScalar(HERO ? 1.6 : 1)))
     const c = lp.dark ? [1, .08, .04] : lp.live ? [.8, .9, 1] : [.8, .9, 1]
-    const k = lp.dark ? .15 + Math.pow(Math.max(0, Math.sin(T / 1000 * 2.2)), 30) * 9 : lp.live ? 5 : 1 + pulse * 2.5
+    const k = HERO ? 10 : lp.dark ? .15 + Math.pow(Math.max(0, Math.sin(T / 1000 * 2.2)), 30) * 9 : lp.live ? 5 : 1 + pulse * 2.5
     strobe.instanceColor.setXYZ(ns, c[0] * k, c[1] * k, c[2] * k); ns++
   }
   for (const k of order) {
@@ -552,7 +557,7 @@ function landmarkParts(T) {
   const mc = live && m && m.mc ? m.mc : 0
   const h = live ? Math.max(18, heightFor(mc || 28)) : 30
   const dark = live && i.devSold ? 1 : 0
-  const lit = live ? (dark ? 0 : .42) : .05
+  const lit = live ? (dark ? 0 : (HERO ? +(Q.get('lit') || .62) : .42)) : .05
   return { h, lit, dark, live, mc }
 }
 
@@ -824,6 +829,11 @@ function frame(T, t) {
     if (f >= 1) blendFrom = null
     else use = { pos: blendFrom.pos.clone().lerp(pose.pos, f), look: blendFrom.look.clone().lerp(pose.look, f) }
   }
+  if (HERO) {
+    const L = LM.lot, h = landmarkParts(T).h, a = +(Q.get('yaw') || 2.35)
+    use = { pos: new THREE.Vector3(L.x + Math.cos(a) * +(Q.get('dist') || 64), +(Q.get('camy') || 9), L.z + Math.sin(a) * +(Q.get('dist') || 64)), look: new THREE.Vector3(L.x, h * +(Q.get('look') || .62), L.z) }
+    camera.fov = +(Q.get('fov') || 40); camera.updateProjectionMatrix()
+  }
   lastPose = use
   camera.position.copy(use.pos); camera.lookAt(use.look)
   if (selected && selected !== LM && T - cardAt > 1000) { if (coins.has(selected.id)) renderCard(T); else select(null) }
@@ -837,6 +847,8 @@ addEventListener('resize', () => {
 })
 
 // ------------------------------------------------------------------ modes
+const HERO = Q.get('hero')
+if (HERO) { scene.fog.density = +(Q.get('fog') || .0034); bloom.strength = +(Q.get('bloom') || .85); document.getElementById('ui').style.display = 'none'; LM.info = { live: true, ticker: PROJECT.ticker, devSold: false, market: { mc: +(Q.get('heromc') || 2400) } } }
 if (REPLAY) {
   document.body.classList.add('capture')
   $('oursTxt').textContent = PROJECT.ticker
