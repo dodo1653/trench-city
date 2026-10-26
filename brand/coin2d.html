@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: #06080c; }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<svg id="s" width="1000" height="1000" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#05070b"/>
+      <stop offset=".55" stop-color="#0b0f17"/>
+      <stop offset=".74" stop-color="#1a1714"/>
+      <stop offset=".75" stop-color="#07090d"/>
+      <stop offset="1" stop-color="#05070a"/>
+    </linearGradient>
+    <radialGradient id="haze" cx=".5" cy=".74" r=".55">
+      <stop offset="0" stop-color="#f0a35a" stop-opacity=".22"/>
+      <stop offset=".5" stop-color="#c0743c" stop-opacity=".07"/>
+      <stop offset="1" stop-color="#c0743c" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="crownGlow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#ffe2b0" stop-opacity=".55"/>
+      <stop offset=".4" stop-color="#f5c27a" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#f5c27a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="crown" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff1d6"/>
+      <stop offset="1" stop-color="#e8b878"/>
+    </linearGradient>
+    <linearGradient id="towerBody" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#151a24"/>
+      <stop offset=".5" stop-color="#10141c"/>
+      <stop offset="1" stop-color="#0a0d13"/>
+    </linearGradient>
+    <linearGradient id="reflect" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3c58a" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#f3c58a" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="softS" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+  <rect width="1000" height="1000" fill="url(#sky)"/>
+  <rect width="1000" height="1000" fill="url(#haze)"/>
+  <g id="rain" opacity=".13" stroke="#b8c6dc" stroke-width="1.1"></g>
+  <g id="back"></g>
+  <g id="mid"></g>
+  <g id="tower"></g>
+  <g id="front"></g>
+  <g id="wet"></g>
+  <text id="cap" x="500" y="876" text-anchor="middle" fill="#f2efe8" font-family="Inter" font-weight="600" font-size="58" letter-spacing="20">TRENCH CITY</text>
+  <rect id="rule" x="440" y="902" width="120" height="1.6" fill="#f3c58a" opacity=".7"/>
+</svg>
+<script>
+// a seeded random so every render is identical
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647
+const NS = 'http://www.w3.org/2000/svg'
+const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e }
+const G = (id) => document.getElementById(id)
+const GROUND = 740
+
+// rain: a few fine slanted streaks
+for (let i = 0; i < 70; i++) { const x = rnd() * 1100 - 50, y = rnd() * 700, l = 30 + rnd() * 50; el('line', { x1: x, y1: y, x2: x - l * .12, y2: y + l }, G('rain')) }
+
+// a building with a window grid; lit = share of lit windows, ribbon = horizontal glazing bands
+function building(g, x, w, top, fill, lit, opts = {}) {
+  el('rect', { x, y: top, width: w, height: GROUND - top, fill }, g)
+  const fh = opts.fh || 13, cols = Math.max(2, Math.floor(w / (opts.cw || 11)))
+  const cw = w / cols
+  for (let y = top + (opts.pad || 10); y < GROUND - 8; y += fh) {
+    if (opts.ribbon) {
+      for (let c = 0; c < cols; c++) {
+        if (rnd() > lit) continue
+        const warm = rnd() < .82
+        el('rect', { x: x + c * cw + 1.2, y, width: cw - 2.4, height: fh * .46, fill: warm ? (rnd() < .5 ? '#f3c58a' : '#e8b06e') : '#cfd9ec', opacity: (.45 + rnd() * .55).toFixed(2) }, g)
+      }
+    } else {
+      for (let c = 0; c < cols; c++) {
+        if (rnd() > lit) continue
+        el('rect', { x: x + c * cw + cw * .25, y, width: cw * .5, height: fh * .5, fill: rnd() < .8 ? '#e9b877' : '#c4d0e4', opacity: (.25 + rnd() * .5).toFixed(2) }, g)
+      }
+    }
+  }
+  if (opts.mast) { el('rect', { x: x + w / 2 - 1.2, y: top - opts.mast, width: 2.4, height: opts.mast, fill }, g); el('circle', { cx: x + w / 2, cy: top - opts.mast, r: 3.2, fill: '#ff4a3a' }, g) }
+}
+
+// back layer: a hazy far skyline
+const back = G('back')
+for (let x = -20; x < 1020;) { const w = 34 + rnd() * 60, h = 70 + rnd() * 170; el('rect', { x, y: GROUND - h, width: w, height: h, fill: '#141922', opacity: .9 }, back); x += w - 4 }
+// mid layer: real buildings with sparse windows, kept low around the tower
+const mid = G('mid')
+const MID = [[30, 92, 470, .18], [132, 70, 560, .14], [214, 110, 410, .2, 34], [336, 64, 590, .12], [604, 70, 575, .14], [686, 104, 430, .2, 30], [802, 80, 520, .16], [892, 96, 470, .18]]
+for (const [x, w, top, lit, mast] of MID) building(mid, x, w, top, '#0c1017', lit * .75, { mast })
+
+// the landmark: podium, three tiers, a lit crown, a mast and a beacon
+const tw = G('tower')
+const cx = 500
+el('ellipse', { cx, cy: 222, rx: 140, ry: 140, fill: 'url(#crownGlow)' }, tw)
+const tiers = [[212, 640, 0], [170, 470, 0], [134, 320, 0], [104, 214, 0]]   // width, top y
+
+for (const [w, top] of tiers) {
+  const x = cx - w / 2
+  el('rect', { x, y: top, width: w, height: GROUND - top, fill: 'url(#towerBody)' }, tw)
+  const pane = 8.6, cols = Math.floor((w - 8) / pane), x0 = cx - cols * pane / 2
+  for (let y = top + 9; y < GROUND - 6; y += 11) {
+    // lit in runs, like real office floors
+    let run = 0, on = false
+    for (let c = 0; c < cols; c++) {
+      if (run-- <= 0) { on = rnd() < .58; run = 1 + Math.floor(rnd() * (on ? 7 : 4)) }
+      el('rect', { x: x0 + c * pane + .6, y, width: pane - 1.2, height: 5.6, fill: on ? (rnd() < .82 ? '#f1c890' : '#d6e0f0') : '#1d2431', opacity: on ? (.55 + rnd() * .45).toFixed(2) : 1 }, tw)
+    }
+  }
+  el('rect', { x, y: top, width: 2, height: GROUND - top, fill: '#f3c58a', opacity: .28 }, tw)          // warm edge light
+  el('rect', { x: x - 2, y: top - 3, width: w + 4, height: 4, fill: '#1c222d' }, tw)                     // setback ledge
+}
+// crown: the top floors glow, with a fine parapet
+el('rect', { x: cx - 52, y: 214, width: 104, height: 54, fill: 'url(#crown)' }, tw)
+for (let y = 221; y < 268; y += 9) el('rect', { x: cx - 52, y, width: 104, height: 1.6, fill: '#c98e4e', opacity: .5 }, tw)
+for (let x = cx - 52 + 8.6; x < cx + 52; x += 8.6) el('rect', { x, y: 214, width: 1.2, height: 54, fill: '#c98e4e', opacity: .4 }, tw)
+el('rect', { x: cx - 56, y: 207, width: 112, height: 8, fill: '#1a1f29' }, tw)
+el('rect', { x: cx - 1.8, y: 120, width: 3.6, height: 88, fill: '#1a1f29' }, tw)
+el('circle', { cx, cy: 120, r: 16, fill: '#e9f1ff', opacity: .35, filter: 'url(#softS)' }, tw)
+el('circle', { cx, cy: 120, r: 4.6, fill: '#f4f8ff' }, tw)
+el('ellipse', { cx, cy: 240, rx: 80, ry: 44, fill: '#ffd9a0', opacity: .22, filter: 'url(#soft)' }, tw)
+
+// foreground: two dark blocks framing the base
+const front = G('front')
+building(front, -10, 150, 640, '#080a0f', .1, {})
+building(front, 860, 160, 620, '#080a0f', .1, {})
+
+// wet street: the tower's light falls on the road
+el('ellipse', { cx, cy: GROUND + 8, rx: 90, ry: 60, fill: '#f3c58a', opacity: .16, filter: 'url(#soft)' }, G('wet'))
+for (let i = 0; i < 14; i++) el('rect', { x: cx - 60 + rnd() * 120, y: GROUND + 4 + rnd() * 50, width: 6, height: 1.4, fill: '#f3c58a', opacity: (.15 + rnd() * .2).toFixed(2) }, G('wet'))
+el('rect', { x: 0, y: GROUND, width: 1000, height: 1.4, fill: '#2a2620' }, G('wet'))
+
+document.fonts.ready.then(() => { window.READY = true })
+</script>
+</body>
+</html>
