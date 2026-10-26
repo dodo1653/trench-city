@@ -67,6 +67,7 @@ el('circle', { cx, cy: G - ch - 68, r: 3.8 * Math.sqrt(B), fill: '#fff' }, g)
 
 // --- the wordmark, centred under the mark
 const Y = +(Q.get('y') || 575)
+if (Q.get('notext')) word.style.display = 'none'
 if (V === 'a') {          // Inter, wide-tracked: quiet and expensive
   el('text', { x: 500, y: Y, 'text-anchor': 'middle', fill: '#fff', 'font-family': 'Inter', 'font-weight': 500, 'font-size': 54, 'letter-spacing': 23 }, word).textContent = 'TRENCH CITY'
 } else if (V === 'b') {   // Syncopate: TRENCH bold, CITY light
@@ -81,7 +82,7 @@ if (Q.get('sub')) el('text', { x: 500, y: Y + 44, 'text-anchor': 'middle', fill:
 // centre the whole lockup vertically
 document.fonts.ready.then(() => {
   const all = document.getElementById('s'), bb = { top: Infinity, bot: -Infinity }
-  for (const n of [mark, word]) { const b = n.getBBox(); bb.top = Math.min(bb.top, b.y); bb.bot = Math.max(bb.bot, b.y + b.height) }
+  for (const n of Q.get('notext') ? [mark] : [mark, word]) { const b = n.getBBox(); bb.top = Math.min(bb.top, b.y); bb.bot = Math.max(bb.bot, b.y + b.height) }
   const dy = 500 - (bb.top + bb.bot) / 2
   mark.setAttribute('transform', `translate(0 ${dy})`); word.setAttribute('transform', `translate(0 ${dy})`)
   window.READY = true
