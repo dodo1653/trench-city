@@ -1,0 +1,10 @@
+data/
+frames/
+stills/
+out/
+*.wav
+*.log
+events.json
+city_capture_backup.html
+node_modules/
+.vercel/

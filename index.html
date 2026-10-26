@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trench City</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A city that builds itself from live pump.fun launches. Every building is a real coin.">
+<meta property="og:title" content="Trench City">
+<meta property="og:description" content="Every building is a live pump.fun launch. Buys light it up, dev sells black it out.">
+<meta property="og:image" content="/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2305070b'/%3E%3Crect x='8' y='12' width='6' height='14' fill='%23f3c58a'/%3E%3Crect x='17' y='6' width='7' height='20' fill='%23f2efe8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #f2efe8; --dim: rgba(242, 239, 232, .52); --faint: rgba(242, 239, 232, .28); --warm: #f3c58a; --red: #ff5a4e; --gold: #e9c46a; }
+  html, body { margin: 0; height: 100%; background: #05070b; overflow: hidden; }
+  canvas { display: block; }
+  #ui { position: fixed; inset: 0; pointer-events: none; font-family: Inter, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  .corner { position: absolute; top: 44px; }
+  #brand { left: 56px; }
+  #brand .name { font-size: 15px; font-weight: 600; letter-spacing: .32em; }
+  #brand .sub { margin-top: 8px; font-size: 13px; color: var(--dim); letter-spacing: .01em; }
+  #clock { right: 56px; text-align: right; }
+  #clock .live { font-size: 12px; font-weight: 600; letter-spacing: .24em; color: var(--dim); }
+  #clock .live i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--red); margin-right: 9px; vertical-align: 1px; }
+  #clock .time { margin-top: 8px; font: 500 13px 'JetBrains Mono', monospace; color: var(--faint); }
+  #stats { position: absolute; right: 56px; bottom: 48px; display: flex; gap: 34px; text-align: right; }
+  #stats div b { display: block; font: 500 22px 'JetBrains Mono', monospace; letter-spacing: -.02em; }
+  #stats div span { font-size: 11px; letter-spacing: .2em; color: var(--faint); text-transform: uppercase; }
+  #log { position: absolute; left: 56px; bottom: 44px; width: 560px; }
+  .ev { display: flex; align-items: baseline; gap: 14px; height: 30px; font-size: 15px; transition: none; white-space: nowrap; }
+  .ev .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; transform: translateY(-2px); }
+  .ev .tk { font-weight: 600; }
+  .ev .what { color: var(--dim); }
+  .ev .amt { font: 500 13px 'JetBrains Mono', monospace; color: var(--faint); }
+  .tag { position: absolute; transform: translate(-50%, -100%); text-align: center; white-space: nowrap; }
+  .tag .stem { width: 1px; height: 34px; margin: 0 auto; background: linear-gradient(to top, rgba(242,239,232,0), rgba(242,239,232,.55)); }
+  .tag .t { font-size: 14px; font-weight: 600; letter-spacing: .02em; }
+  .tag .m { margin-top: 3px; font: 500 11px 'JetBrains Mono', monospace; color: var(--dim); }
+  .tag .flag { margin-top: 5px; font-size: 10px; font-weight: 600; letter-spacing: .22em; }
+  .site { pointer-events: auto; }
+  #search { position: absolute; top: 38px; left: 50%; transform: translateX(-50%); width: 340px; }
+  #search input { width: 100%; box-sizing: border-box; height: 38px; padding: 0 16px 0 38px; border-radius: 19px; border: 1px solid rgba(242,239,232,.12);
+    background: rgba(10,12,16,.55) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%23f2efe8' stroke-opacity='.45' stroke-width='1.6'%3E%3Ccircle cx='6' cy='6' r='4.6'/%3E%3Cpath d='M9.5 9.5 13 13'/%3E%3C/svg%3E") 15px 50% no-repeat;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); color: var(--ink); font: 500 13px Inter, sans-serif; outline: none; transition: border-color .2s; }
+  #search input::placeholder { color: var(--faint); }
+  #search input:focus { border-color: rgba(242,239,232,.32); }
+  #search .msg { margin-top: 8px; text-align: center; font-size: 12px; color: var(--dim); height: 14px; }
+  #auto { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); height: 34px; padding: 0 18px; border-radius: 17px; border: 1px solid rgba(242,239,232,.16);
+    background: rgba(10,12,16,.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); color: var(--ink); font: 600 11px Inter, sans-serif; letter-spacing: .2em; cursor: pointer; display: none; }
+  #auto:hover { border-color: rgba(242,239,232,.4); }
+  #hint { position: absolute; left: 50%; bottom: 52px; transform: translateX(-50%); font-size: 12px; color: var(--faint); letter-spacing: .02em; transition: opacity .6s; }
+  #card { position: absolute; top: 108px; right: 56px; width: 330px; padding: 22px 22px 18px; box-sizing: border-box; border-radius: 16px;
+    background: rgba(10,12,16,.62); border: 1px solid rgba(242,239,232,.1); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    opacity: 0; transform: translateX(14px); transition: opacity .28s, transform .28s; pointer-events: none; }
+  #card.on { opacity: 1; transform: none; pointer-events: auto; }
+  #card .x { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; border-radius: 14px; border: 0; background: none; color: var(--dim); font-size: 18px; cursor: pointer; }
+  #card .x:hover { color: var(--ink); background: rgba(242,239,232,.06); }
+  #card .tk { font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+  #card .nm { margin-top: 3px; font-size: 13px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 24px; }
+  #card .mc { margin-top: 18px; font: 500 30px 'JetBrains Mono', monospace; letter-spacing: -.03em; }
+  #card .chg { font: 500 12px 'JetBrains Mono', monospace; margin-top: 2px; }
+  #card svg { display: block; margin: 14px 0 6px; }
+  #card .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px 8px; margin: 14px 0 16px; }
+  #card .grid b { display: block; font: 500 14px 'JetBrains Mono', monospace; }
+  #card .grid span { font-size: 10px; letter-spacing: .16em; color: var(--faint); text-transform: uppercase; }
+  #card .trades { border-top: 1px solid rgba(242,239,232,.08); padding-top: 10px; }
+  #card .tr { display: flex; justify-content: space-between; font: 500 12px 'JetBrains Mono', monospace; color: var(--dim); height: 22px; align-items: center; }
+  #card .tr .b { color: #9fd9b5; } #card .tr .s { color: #ef8a80; } #card .tr .d { color: var(--red); }
+  #card .btns { display: flex; gap: 8px; margin-top: 16px; }
+  #card .btns a, #card .btns button { flex: 1; height: 36px; border-radius: 10px; border: 1px solid rgba(242,239,232,.14); background: rgba(242,239,232,.04); color: var(--ink);
+    font: 600 12px Inter, sans-serif; display: flex; align-items: center; justify-content: center; text-decoration: none; cursor: pointer; }
+  #card .btns a:hover, #card .btns button:hover { background: rgba(242,239,232,.1); }
+  #card .flagrow { margin-top: 10px; font-size: 10px; font-weight: 600; letter-spacing: .22em; }
+  #warm { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); text-align: center; transition: opacity .8s; opacity: 0; }
+  #warm b { display: block; font-size: 15px; font-weight: 600; letter-spacing: .28em; }
+  #warm span { display: block; margin-top: 10px; font-size: 13px; color: var(--dim); }
+  #ours { margin-top: 14px; display: inline-flex; align-items: center; gap: 9px; height: 30px; padding: 0 14px 0 11px; border-radius: 15px; border: 1px solid rgba(242,239,232,.14);
+    background: rgba(10,12,16,.5); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: var(--ink); font: 600 12px Inter, sans-serif; cursor: pointer; }
+  #ours:hover { border-color: rgba(242,239,232,.35); }
+  #ours i { width: 7px; height: 7px; border-radius: 50%; background: #e9eef8; box-shadow: 0 0 8px #cfe0ff; }
+  #card .rule { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: rgba(242,239,232,.04); font-size: 12px; line-height: 1.5; color: var(--dim); }
+  #card .rule b { color: var(--ink); font-weight: 600; }
+  #card .wal { display: flex; justify-content: space-between; align-items: center; font: 500 12px 'JetBrains Mono', monospace; height: 26px; color: var(--dim); }
+  #card .wal a { color: var(--ink); text-decoration: none; border-bottom: 1px solid rgba(242,239,232,.2); }
+  #card .ok { color: #9fd9b5; } #card .bad { color: var(--red); }
+  #card .sect { margin-top: 16px; font-size: 10px; letter-spacing: .2em; color: var(--faint); text-transform: uppercase; }
+  #foot { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); font-size: 11px; color: rgba(242,239,232,.22); white-space: nowrap; }
+  #foot a { color: inherit; }
+  body.capture .site, body.capture #foot, body.capture #hint { display: none !important; }
+  canvas { cursor: grab; } canvas.drag { cursor: grabbing; } canvas.over { cursor: pointer; }
+  @media (max-width: 760px) {
+    .corner { top: 20px; } #brand { left: 20px; } #clock { right: 20px; } #brand .sub { display: none; }
+    #search { top: 64px; width: calc(100% - 40px); } #log { display: none; } #stats { right: 20px; bottom: 30px; gap: 20px; } #stats div b { font-size: 17px; }
+    #card { top: auto; bottom: 0; right: 0; left: 0; width: auto; border-radius: 18px 18px 0 0; transform: translateY(20px); }
+    #auto { bottom: 92px; } #hint { display: none; } #foot { display: none; }
+  }
+</style>
+</head>
+<body>
+<div id="ui">
+  <div class="corner" id="brand"><div class="name">TRENCH CITY</div><div class="sub">Every building is a live pump.fun launch.</div><button id="ours" class="site"><i></i><span id="oursTxt">Our coin</span></button></div>
+  <div class="corner" id="clock"><div class="live"><i></i>LIVE</div><div class="time" id="time"></div></div>
+  <div id="tags"></div>
+  <div id="search" class="site"><input id="q" placeholder="Search a ticker or contract address" autocomplete="off" spellcheck="false"><div class="msg" id="qmsg"></div></div>
+  <button id="auto" class="site">AUTO CAMERA</button>
+  <div id="hint">Drag to look around. Click a building.</div>
+  <div id="card" class="site"></div>
+  <div id="warm"><b>WAKING UP</b><span>The city builds itself as new coins launch. The first ones arrive within seconds.</span></div>
+  <div id="foot">Live data from pump.fun. Independent project, not affiliated with pump.fun. Nothing here is financial advice.</div>
+  <div id="log"></div>
+  <div id="stats">
+    <div><b id="sLaunch">0</b><span>Launched</span></div>
+    <div><b id="sDev">0</b><span>Dev sold</span></div>
+    <div><b id="sVol">0</b><span>SOL traded</span></div>
+  </div>
+</div>
+<script>window.READY = false</script>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/" } }</script>
+<script type="module">
+import * as THREE from 'three'
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js'
+import { Reflector } from 'three/addons/objects/Reflector.js'
+import PROJECT from './project.config.js'
+
+// ------------------------------------------------------------------ parameters
+const Q = new URLSearchParams(location.search)
+const REPLAY = Q.get('replay')                       // data/replay.json -> deterministic capture
+const FEED = Q.get('feed') || '/api/feed'
+const FROM = +(Q.get('from') || 0), SPEED = +(Q.get('speed') || 1)
+let SOL_USD = +(Q.get('sol') || 101)
+let W = innerWidth, H = innerHeight
+
+// ------------------------------------------------------------------ helpers
+const $ = (id) => document.getElementById(id)
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x))
+const smooth = (x) => { x = clamp(x); return x * x * (3 - 2 * x) }
+const ease = (x) => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2 }
+const hash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) } return (h >>> 0) / 4294967296 }
+const fmtUsd = (v) => v >= 1e6 ? '$' + (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v / 1e3).toFixed(1) + 'K' : '$' + v.toFixed(0)
+const fmtSol = (v) => v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2)
+
+// ------------------------------------------------------------------ data model: every coin -> one building
+// coin fields from the relay: id, n (name), s (ticker), t (launch ms), ticks [[ms, mcSol, curveSol]], tr [[ms, buy?, sol, wallet]],
+// de [[ms, buy?, sol]] (dev buys / sells), ds (dev sold half+), g (graduated)
+const coins = new Map()
+let order = []                                       // launch order -> lot index
+const LOT = 13, STREET = 9, BLOCK = 3
+const lots = []
+{ // lots spiral out from the centre, blocks of 3x3 lots between streets
+  const R = 15
+  for (let i = -R; i <= R; i++) for (let j = -R; j <= R; j++) {
+    const off = (k) => k * LOT + Math.floor((k + 300) / BLOCK - 300 / BLOCK) * STREET
+    const x = off(i), z = off(j)
+    lots.push({ x, z, d: Math.hypot(x, z) + hash(i + ':' + j) * 6 })
+  }
+  lots.sort((a, b) => a.d - b.d)
+}
+const lotUsed = new Uint8Array(lots.length)
+lots.forEach((l, i) => { if (Math.hypot(l.x, l.z) < 20) lotUsed[i] = 1 })   // the centre lot is the project's tower, its 8 neighbours an open plaza
+const takeLot = () => { for (let i = 0; i < lots.length; i++) if (!lotUsed[i]) { lotUsed[i] = 1; return i } return lots.length - 1 }
+const mergeArr = (a = [], b = []) => { const seen = new Set(a.map((x) => x[0] + ':' + x[1])); return a.concat(b.filter((x) => !seen.has(x[0] + ':' + x[1]))).sort((x, y) => x[0] - y[0]).slice(-500) }
+function addCoin(c) {
+  const old = coins.get(c.id)
+  if (old) { for (const f of ['ticks', 'tr', 'de']) c[f] = mergeArr(old.raw[f], c[f]); Object.assign(old.raw, c); prep(old); return }
+  const li = takeLot()
+  const k = { id: c.id, raw: c, seed: hash(c.id), lotI: li, lot: lots[li] }
+  order.push(k); coins.set(c.id, k); prep(k)
+}
+function dropCoin(k) { lotUsed[k.lotI] = 0; coins.delete(k.id); order = order.filter((o) => o !== k); state.delete(k.id) }
+function prep(k) {
+  const c = k.raw
+  k.ticks = (c.ticks || []).filter((x) => x[1] > 0)
+  k.trades = (c.tr || []).slice().sort((a, b) => a[0] - b[0])
+  k.dev = (c.de || []).slice().sort((a, b) => a[0] - b[0])
+  k.t = c.t
+  const firstSell = k.dev.find((e) => e[1] === 0 && e[2] > 0.05)
+  k.dsAt = c.ds && firstSell ? firstSell[0] : (c.ds ? (k.dev.at(-1)?.[0] ?? c.t) : null)
+  k.dsSol = firstSell ? firstSell[2] : 0
+  k.peakMc = k.ticks.reduce((m, x) => Math.max(m, x[1]), 30)
+  if (k.dsAt) { // a dev sale only brings the building down when the price really broke afterwards
+    const before = k.ticks.filter((x) => x[0] <= k.dsAt).reduce((m, x) => Math.max(m, x[1]), 30)
+    const after = mcAt(k, k.dsAt + 20000)
+    k.collapse = after < before * 0.62
+  }
+  k.gradAt = c.g ? (k.ticks.find((x) => x[1] > 300)?.[0] ?? k.ticks.at(-1)?.[0]) : null
+}
+function mcAt(k, T) {
+  const tk = k.ticks
+  if (!tk.length || T < tk[0][0]) return tk.length ? tk[0][1] : 30
+  let i = tk.length - 1
+  while (i > 0 && tk[i][0] > T) i--
+  if (i >= tk.length - 1) return tk[i][1]
+  const a = tk[i], b = tk[i + 1], f = smooth((T - a[0]) / Math.min(1800, b[0] - a[0]))
+  return a[1] + (b[1] - a[1]) * f
+}
+const heightFor = (mc) => 5 + 24 * Math.log(Math.max(mc, 27) / 27 + 0.06)
+
+// ------------------------------------------------------------------ renderer + scene
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' })
+renderer.setPixelRatio(REPLAY ? 1 : Math.min(devicePixelRatio, 1.5)); renderer.setSize(W, H)
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0
+document.body.prepend(renderer.domElement)
+const scene = new THREE.Scene()
+const FOG = new THREE.Color().setRGB(.016, .019, .025, THREE.LinearSRGBColorSpace)
+scene.fog = new THREE.FogExp2(FOG, 0.0062)
+const camera = new THREE.PerspectiveCamera(32, W / H, 0.5, 5000)
+
+// sky: deep night with the sodium glow a city throws on low cloud
+{
+  const g = new THREE.SphereGeometry(2400, 48, 24)
+  const m = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: {},
+    vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }',
+    fragmentShader: `varying vec3 vP;
+      void main(){ float h = normalize(vP).y;
+        vec3 top = vec3(.004,.006,.010), mid = vec3(.016,.019,.025), glow = vec3(.075,.05,.035);
+        vec3 c = mix(mid, top, smoothstep(.0,.42,h));
+        c = mix(c, glow, exp(-max(h,0.)*14.) * .5); c = mix(c, mid, smoothstep(.02,-.05,h));
+        gl_FragColor = vec4(c,1.); }` })
+  scene.add(new THREE.Mesh(g, m))
+}
+scene.add(new THREE.HemisphereLight(0x3a4252, 0x0c0a08, 0.32))
+const moon = new THREE.DirectionalLight(0x8ea6c8, 0.22); moon.position.set(-200, 300, -120); scene.add(moon)
+
+// ------------------------------------------------------------------ ground: streets, pavements, wet reflections
+const SPAN = 900
+const groundMat = new THREE.MeshStandardMaterial({ transparent: true, roughness: 0.55, metalness: 0 })
+{
+  const mirror = new Reflector(new THREE.PlaneGeometry(SPAN * 2, SPAN * 2), { textureWidth: 640, textureHeight: 360, color: 0x8d9097 })
+  mirror.rotation.x = -Math.PI / 2; mirror.position.y = -0.04; scene.add(mirror)
+  // the street plan is drawn to a canvas: dark wet asphalt (see-through to the mirror), pale kerbed pavement blocks, faint markings
+  const N = 4096, CS = 340, cv = document.createElement('canvas'); cv.width = cv.height = N
+  const g = cv.getContext('2d'), s = N / (CS * 2)
+  const P = (v) => (v + CS) * s
+  g.fillStyle = 'rgba(14,15,17,0.80)'; g.fillRect(0, 0, N, N)
+  const blockSpan = BLOCK * LOT
+  for (let bi = -6; bi <= 6; bi++) for (let bj = -6; bj <= 6; bj++) {
+    const x0 = bi * (blockSpan + STREET) - LOT / 2 - 2, z0 = bj * (blockSpan + STREET) - LOT / 2 - 2
+    g.fillStyle = 'rgba(30,31,33,0.97)'; g.fillRect(P(x0), P(z0), (blockSpan + 4) * s, (blockSpan + 4) * s)
+    g.strokeStyle = 'rgba(70,70,72,0.9)'; g.lineWidth = 0.35 * s; g.strokeRect(P(x0), P(z0), (blockSpan + 4) * s, (blockSpan + 4) * s)
+    // lane markings, dashed, down the middle of the street east and south of the block
+    g.strokeStyle = 'rgba(150,140,110,0.32)'; g.lineWidth = 0.16 * s; g.setLineDash([2.2 * s, 2.8 * s])
+    const mx = x0 + blockSpan + 4 + (STREET - 4) / 2, mz = z0 + blockSpan + 4 + (STREET - 4) / 2
+    g.beginPath(); g.moveTo(P(mx), P(z0)); g.lineTo(P(mx), P(z0 + blockSpan + 4)); g.stroke()
+    g.beginPath(); g.moveTo(P(x0), P(mz)); g.lineTo(P(x0 + blockSpan + 4), P(mz)); g.stroke()
+    g.setLineDash([])
+  }
+  // puddles: the asphalt opens further where water stands
+  for (let i = 0; i < 700; i++) {
+    const x = (hash('px' + i) - .5) * N, y = (hash('py' + i) - .5) * N, r = (6 + hash('pr' + i) * 26) * s * .25
+    const gr = g.createRadialGradient(N / 2 + x, N / 2 + y, 0, N / 2 + x, N / 2 + y, r)
+    gr.addColorStop(0, 'rgba(6,7,9,0.22)'); gr.addColorStop(1, 'rgba(6,7,9,0)')
+    g.globalCompositeOperation = 'destination-out'; g.fillStyle = gr; g.fillRect(N / 2 + x - r, N / 2 + y - r, r * 2, r * 2)
+  }
+  g.globalCompositeOperation = 'source-over'
+  const B = 40; g.fillStyle = 'rgba(14,15,17,0.80)'; g.clearRect(0, 0, N, B); g.clearRect(0, N - B, N, B); g.clearRect(0, 0, B, N); g.clearRect(N - B, 0, B, N)
+  g.fillRect(0, 0, N, B); g.fillRect(0, N - B, N, B); g.fillRect(0, 0, B, N); g.fillRect(N - B, 0, B, N)
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8
+  tex.repeat.set(SPAN / CS, SPAN / CS); tex.offset.set(.5 - SPAN / CS / 2, .5 - SPAN / CS / 2)
+  groundMat.map = tex
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(SPAN * 2, SPAN * 2), groundMat)
+  ground.rotation.x = -Math.PI / 2; ground.renderOrder = 1; scene.add(ground)
+}
+
+// street lighting, drawn on the ground in the shader: a sodium glow down each street and lamp heads along both kerbs.
+// it only reaches as far as the city has grown (cityR), so the lit grid spreads outward with every launch.
+const streetU = { cityR: { value: 40 } }
+groundMat.onBeforeCompile = (sh) => {
+  sh.uniforms.cityR = streetU.cityR
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vGW;')
+    .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGW = (modelMatrix * vec4(position,1.)).xyz;')
+  sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vGW; uniform float cityR;')
+    .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      {
+        vec2 q = vGW.xz;
+        vec2 dd = mod(q + 11. + 24., 48.) - 24.;
+        float reach = smoothstep(cityR + 26., cityR - 10., length(q));
+        float road = max(exp(-dd.x * dd.x / 7.), exp(-dd.y * dd.y / 7.));
+        vec2 al = mod(q + 6., 12.) - 6.;
+        float lampX = smoothstep(.55, .0, length(vec2(abs(dd.x) - 3.9, al.y)));
+        float lampZ = smoothstep(.55, .0, length(vec2(al.x, abs(dd.y) - 3.9)));
+        float pools = exp(-pow(abs(dd.x) - 3.4, 2.) / 5.) * exp(-al.y * al.y / 14.) + exp(-pow(abs(dd.y) - 3.4, 2.) / 5.) * exp(-al.x * al.x / 14.);
+        vec3 sodium = vec3(1.0, .52, .2);
+        totalEmissiveRadiance += sodium * reach * (road * .035 + pools * .075 + max(lampX, lampZ) * 3.2);
+      }`)
+}
+// ------------------------------------------------------------------ buildings: one instanced box set, windows drawn in the shader
+const MAXB = 3000
+const box = new THREE.BoxGeometry(1, 1, 1); box.translate(0, 0.5, 0)
+const aSize = new THREE.InstancedBufferAttribute(new Float32Array(MAXB * 3), 3)
+const aA = new THREE.InstancedBufferAttribute(new Float32Array(MAXB * 4), 4)      // seed, lit fraction, dark (top-down), base y
+const aB = new THREE.InstancedBufferAttribute(new Float32Array(MAXB * 4), 4)      // pulse pos, pulse amt, gold, building height
+const aC = new THREE.InstancedBufferAttribute(new Float32Array(MAXB * 4), 4)      // rise (0..1), style, warmth, strobe
+box.setAttribute('aSize', aSize); box.setAttribute('aA', aA); box.setAttribute('aB', aB); box.setAttribute('aC', aC)
+const bmat = new THREE.MeshStandardMaterial({ color: 0x26272b, roughness: 0.7, metalness: 0.05 })
+bmat.onBeforeCompile = (sh) => {
+  sh.vertexShader = sh.vertexShader
+    .replace('#include <common>', `#include <common>
+      attribute vec3 aSize; attribute vec4 aA; attribute vec4 aB; attribute vec4 aC;
+      varying vec3 vWP; varying vec3 vNo; varying vec3 vSz; varying vec4 vA; varying vec4 vB; varying vec4 vC;`)
+    .replace('#include <begin_vertex>', `#include <begin_vertex>
+      vec4 wp4 = modelMatrix * instanceMatrix * vec4(position, 1.0); vWP = wp4.xyz; vNo = normal; vSz = aSize; vA = aA; vB = aB; vC = aC;`)
+  sh.fragmentShader = sh.fragmentShader
+    .replace('#include <common>', `#include <common>
+      varying vec3 vWP; varying vec3 vNo; varying vec3 vSz; varying vec4 vA; varying vec4 vB; varying vec4 vC;
+      float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }`)
+    .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      {
+        float seed = vA.x, lit = vA.y, dark = vA.z, y0 = vA.w;
+        float bh = max(vB.w, 1.0), y = vWP.y - y0, yn = y / bh;
+        bool side = abs(vNo.y) < 0.5 && vC.y < 1.5;
+        float rise = vC.x, style = vC.y, warmth = vC.z;
+        vec3 wcol = vec3(0.0);
+        if (side) {
+          float u = abs(vNo.x) > 0.5 ? vWP.z * sign(vNo.x) : vWP.x * -sign(vNo.z);
+          float face = abs(vNo.x) > 0.5 ? (vNo.x > 0. ? 1. : 2.) : (vNo.z > 0. ? 3. : 4.);
+          float fh = 1.25, cw = style < .5 ? 1.05 : 2.4;
+          vec2 cell = floor(vec2(u / cw, y / fh)); vec2 f = fract(vec2(u / cw, y / fh));
+          float win = style < .5
+            ? step(.16, f.x) * step(f.x, .84) * step(.24, f.y) * step(f.y, .82)
+            : step(.04, f.x) * step(f.x, .96) * step(.30, f.y) * step(f.y, .78);
+          float ground = step(y, fh);                                  // lobby floor stays lit
+          float r = h21(cell + vec2(seed * 97.0 + face * 13.1, seed * 31.0));
+          float on = step(r, lit) + ground * .6;
+          on *= step(yn, 1.0 - dark) * step(yn, rise);                  // blackout runs top-down, construction bottom-up
+          float tone = h21(cell * 1.7 + seed * 7.0);
+          vec3 warm = mix(vec3(1.0, .63, .32), vec3(1.0, .78, .52), tone);
+          vec3 cool = mix(vec3(.62, .74, 1.0), vec3(.86, .9, 1.0), tone);
+          vec3 c = mix(warm, cool, step(warmth, tone));
+          float rr = h21(cell + 3.3); float bright = (.18 + .85 * rr * rr) * on;
+          float pulse = exp(-pow((yn - vB.x) * 7.0, 2.0)) * vB.y;            // trades run up the facade
+          bright += pulse * (on * 2.2 + win * .9);
+          wcol = c * win * bright * 1.35;
+          // unlit glass picks up a little sky
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.03,.035,.045), win * .8);
+          // graduated: a gold floodlit crown
+          float crown = smoothstep(.86, 1.0, yn) * vB.z;
+          wcol += vec3(1.0, .72, .36) * crown * smoothstep(.86, 1.0, yn) * 1.1 + c * win * vB.z * .35;
+          // street light washes the lowest floors warm
+          wcol += vec3(.5,.3,.15) * .05 * exp(-y * .25) * (1. - dark);
+        } else {
+          diffuseColor.rgb *= .6;
+        }
+        totalEmissiveRadiance += wcol;
+      }`)
+}
+const bmesh = new THREE.InstancedMesh(box, bmat, MAXB); bmesh.count = 0; bmesh.frustumCulled = false
+scene.add(bmesh)
+
+// red aviation lights on tall roofs
+const STROBES = 600
+const strobe = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }), STROBES)
+strobe.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(STROBES * 3), 3); strobe.count = 0; strobe.frustumCulled = false
+scene.add(strobe)
+
+// dust after a collapse: soft sprites, fully determined by age
+const DUST_N = 4000
+const dustGeo = new THREE.BufferGeometry()
+dustGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(DUST_N * 3), 3))
+dustGeo.setAttribute('alpha', new THREE.BufferAttribute(new Float32Array(DUST_N), 1))
+dustGeo.setAttribute('size', new THREE.BufferAttribute(new Float32Array(DUST_N), 1))
+const dust = new THREE.Points(dustGeo, new THREE.ShaderMaterial({ transparent: true, depthWrite: false,
+  uniforms: { fogColor: { value: FOG } },
+  vertexShader: `attribute float alpha; attribute float size; varying float vA;
+    void main(){ vA = alpha; vec4 mv = modelViewMatrix * vec4(position,1.); gl_PointSize = size * 900. / -mv.z; gl_Position = projectionMatrix * mv; }`,
+  fragmentShader: `varying float vA; void main(){ vec2 p = gl_PointCoord - .5; float d = length(p); float a = smoothstep(.5, .0, d) * vA; gl_FragColor = vec4(vec3(.16,.13,.11), a * .55); }` }))
+dust.frustumCulled = false; scene.add(dust)
+
+// rain: thin streaks around the camera
+const RAIN_N = 5000
+const rainGeo = new THREE.BufferGeometry()
+const rainSeed = new Float32Array(RAIN_N * 3)
+for (let i = 0; i < RAIN_N; i++) { rainSeed[i * 3] = hash('rx' + i); rainSeed[i * 3 + 1] = hash('ry' + i); rainSeed[i * 3 + 2] = hash('rz' + i) }
+rainGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(RAIN_N * 6), 3))
+const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0x9fb0c8, transparent: true, opacity: 0.08, depthWrite: false }))
+rain.frustumCulled = false; scene.add(rain)
+
+// ------------------------------------------------------------------ post: bloom, then grain + vignette
+const composer = new EffectComposer(renderer)
+composer.addPass(new RenderPass(scene, camera))
+const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.55, 0.5, 0.78); composer.addPass(bloom)
+composer.addPass(new OutputPass())
+const grade = new ShaderPass({ uniforms: { tDiffuse: { value: null }, t: { value: 0 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }',
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float t; varying vec2 vUv;
+    float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)) + t * 7.13) * 43758.5453); }
+    void main(){ vec2 d = vUv - .5;
+      vec3 c = texture2D(tDiffuse, vUv).rgb;
+      c *= 1. - dot(d, d) * .9;
+      c = mix(c, c * vec3(.96, 1., 1.06), .5);
+      c += (h(vUv * 1000.) - .5) * .035;
+      gl_FragColor = vec4(c, 1.); }` })
+composer.addPass(grade)
+
+// ------------------------------------------------------------------ simulation state at time T (pure function of the data)
+const tmpM = new THREE.Matrix4(), tmpV = new THREE.Vector3(), tmpS = new THREE.Vector3(), tmpQ = new THREE.Quaternion()
+const state = new Map()
+function evalCoin(k, T) {
+  if (T < k.t) return null
+  const age = (T - k.t) / 1000
+  const mc = mcAt(k, T)
+  let h = heightFor(mc)
+  const rise = ease(age / 4.5)
+  // trades: the strongest pulse still running up (buys) or down (sells) the facade
+  let pPos = 0, pAmt = 0, last = k.t, vol = 0
+  for (let i = k.trades.length - 1; i >= 0; i--) {
+    const tr = k.trades[i]
+    if (tr[0] > T) continue
+    vol += tr[2]
+    if (last === k.t) last = tr[0]
+    const a = (T - tr[0]) / 1000
+    if (a < 1.6) {
+      const amt = clamp(Math.sqrt(tr[2]) * .55, .25, 1.6) * (1 - a / 1.6)
+      if (amt > pAmt) { pAmt = amt; pPos = tr[1] ? a / 1.3 : 1 - a / 1.3 }
+    }
+  }
+  const quiet = (T - last) / 1000
+  const act = Math.exp(-quiet / 150)
+  let lit = clamp(.07 + .3 * act + .22 * clamp(Math.log(mc / 28) / 3))
+  let dark = 0, y0 = 0, collapse = 0
+  if (k.dsAt && T >= k.dsAt) {
+    const a = (T - k.dsAt) / 1000
+    dark = ease(a / 2.6) * (k.collapse ? 1 : .55)
+    if (k.collapse) { collapse = clamp((a - 2.8) / 7); y0 = -h * ease(collapse) * .96 }
+  }
+  const gold = k.gradAt && T >= k.gradAt ? ease((T - k.gradAt) / 3000) : 0
+  return { mc, h, rise, pPos, pAmt, lit, dark, y0, collapse, gold, act, last, vol, age }
+}
+
+const instCoin = []
+function updateCity(T) {
+  let n = 0, ns = 0
+  {
+    const L = LM.lot, lp = landmarkParts(T), sd = LM.seed
+    state.set(LM.id, { mc: lp.mc, h: lp.h, rise: 1, y0: 0, dark: lp.dark })
+    const parts = [[12, 12, Math.min(lp.h, 9), 0, 0], [7.6, 7.6, lp.h, 0, 0], [8.2, 8.2, .5, lp.h - .5, 2], [1.4, 1.4, 3 + lp.h * .18, lp.h, 2]]
+    for (const [pw, pd, ph, y, st] of parts) {
+      instCoin[n] = LM
+      bmesh.setMatrixAt(n, tmpM.compose(tmpV.set(L.x, y, L.z), tmpQ.identity(), tmpS.set(pw, ph, pd)))
+      aSize.setXYZ(n, pw, ph, pd); aA.setXYZW(n, sd, st === 2 ? 0 : lp.lit, st === 2 ? 1 : lp.dark, y); aB.setXYZW(n, 0, 0, lp.dark ? 0 : lp.live ? .55 : .3, lp.h); aC.setXYZW(n, 1, st, .45, 0); n++
+    }
+    // beacon: steady cool white while the dev holds, red when the dev has sold, a slow pulse before launch
+    const top = lp.h + 3 + lp.h * .18 + .3, pulse = .5 + .5 * Math.sin(T / 1000 * 1.4)
+    strobe.setMatrixAt(ns, tmpM.makeTranslation(L.x, top, L.z))
+    const c = lp.dark ? [1, .08, .04] : lp.live ? [.8, .9, 1] : [.8, .9, 1]
+    const k = lp.dark ? .15 + Math.pow(Math.max(0, Math.sin(T / 1000 * 2.2)), 30) * 9 : lp.live ? 5 : 1 + pulse * 2.5
+    strobe.instanceColor.setXYZ(ns, c[0] * k, c[1] * k, c[2] * k); ns++
+  }
+  for (const k of order) {
+    const s = evalCoin(k, T); state.set(k.id, s)
+    if (!s || (s.collapse >= 1 && (T - k.dsAt) > 60000)) continue
+    const sd = k.seed, L = k.lot
+    const fw = 6.2 + 3.2 * hash(k.id + 'w') + Math.min(2, s.h / 40), fd = 6.2 + 3.2 * hash(k.id + 'd') + Math.min(2, s.h / 40)
+    const style = hash(k.id + 's') < .62 ? 0 : 1, warmth = .7 + .28 * hash(k.id + 'c')
+    const setback = s.h > 34 && hash(k.id + 'b') < .7
+    const parts = setback ? [[fw, fd, s.h * .58], [fw * .72, fd * .72, s.h]] : [[fw, fd, s.h]]
+    const top = parts.at(-1), roofY = s.y0 + top[2] * s.rise
+    const extras = [[top[0] + .5, top[1] + .5, .45, roofY - .45, 2]]
+    if (s.rise > .97) {
+      extras.push([top[0] * (.28 + .2 * hash(k.id + 'p')), top[1] * (.3 + .2 * hash(k.id + 'q')), 1.6 + 1.6 * hash(k.id + 'r'), roofY, 2])
+      if (s.h > 55) extras.push([.35, .35, 4 + s.h * .12, roofY, 2])
+    }
+    for (const [pw, pd, ph, y, st] of extras) {
+      if (n >= MAXB) break
+      tmpM.compose(tmpV.set(L.x, y, L.z), tmpQ.identity(), tmpS.set(pw, ph, pd))
+      instCoin[n] = k; bmesh.setMatrixAt(n, tmpM); aSize.setXYZ(n, pw, ph, pd); aA.setXYZW(n, sd, 0, 1, y); aB.setXYZW(n, 0, 0, 0, s.h); aC.setXYZW(n, 1, st, warmth, 0); n++
+    }
+    for (const [pw, pd, ph] of parts) {
+      if (n >= MAXB) break
+      const hh = ph * s.rise
+      tmpM.compose(tmpV.set(L.x, s.y0, L.z), tmpQ.identity(), tmpS.set(pw, Math.max(.05, hh), pd))
+      bmesh.setMatrixAt(n, tmpM); instCoin[n] = k
+      aSize.setXYZ(n, pw, ph, pd)
+      aA.setXYZW(n, sd, s.lit, s.dark, s.y0)
+      aB.setXYZW(n, s.pPos, s.pAmt, s.gold, s.h)
+      aC.setXYZW(n, 1.0, style, warmth, 0)
+      n++
+    }
+    if (s.h > 30 && s.rise > .98 && ns < STROBES && s.collapse < .2) {
+      const blink = Math.pow(Math.max(0, Math.sin((T / 1000) * 2.2 + sd * 40)), 30)
+      strobe.setMatrixAt(ns, tmpM.makeTranslation(L.x, s.h + s.y0 + (s.h > 55 ? 4 + s.h * .12 : 2.2) + .2, L.z))
+      const red = s.gold > .5 ? [1, .9, .7] : [1, .08, .04]
+      strobe.instanceColor.setXYZ(ns, red[0] * (.15 + blink * 9), red[1] * (.15 + blink * 9), red[2] * (.15 + blink * 9))
+      ns++
+    }
+  }
+  bmesh.count = n; strobe.count = ns
+  let cr = 30; for (const k of order) if (state.get(k.id)) cr = Math.max(cr, Math.hypot(k.lot.x, k.lot.z)); streetU.cityR.value = cr
+  for (const a of [aSize, aA, aB, aC]) a.needsUpdate = true
+  bmesh.instanceMatrix.needsUpdate = true; strobe.instanceMatrix.needsUpdate = true; strobe.instanceColor.needsUpdate = true
+  // dust over recent collapses
+  const pos = dustGeo.attributes.position.array, al = dustGeo.attributes.alpha.array, sz = dustGeo.attributes.size.array
+  let d = 0
+  for (const k of order) {
+    if (!k.collapse || !k.dsAt) continue
+    const a = (T - k.dsAt) / 1000 - 2.8
+    if (a < 0 || a > 26) continue
+    const s = state.get(k.id), H0 = heightFor(k.peakMc)
+    for (let i = 0; i < 420 && d < DUST_N; i++, d++) {
+      const r1 = hash(k.id + 'd' + i), r2 = hash(k.id + 'e' + i), r3 = hash(k.id + 'f' + i)
+      const born = r3 * 7, pa = a - born
+      if (pa < 0) { al[d] = 0; continue }
+      const ang = r1 * 6.283, spread = 2 + pa * (1.3 + r2 * 1.5)
+      pos[d * 3] = k.lot.x + Math.cos(ang) * spread
+      pos[d * 3 + 1] = Math.min(H0 * .7, r2 * H0 * .5 * (1 - Math.exp(-pa * .4))) + pa * .6
+      pos[d * 3 + 2] = k.lot.z + Math.sin(ang) * spread
+      sz[d] = 1.2 + pa * .35 + r1 * 1.4
+      al[d] = clamp(pa / 1.5) * clamp(1 - pa / 18) * .32
+    }
+  }
+  for (; d < DUST_N; d++) al[d] = 0
+  dustGeo.attributes.position.needsUpdate = true; dustGeo.attributes.alpha.needsUpdate = true; dustGeo.attributes.size.needsUpdate = true
+}
+
+// ------------------------------------------------------------------ events (for the log, labels and the camera)
+function eventsUpTo(T, windowMs) {
+  const out = []
+  for (const k of order) {
+    const c = k.raw, tk = c.s || '?'
+    if (k.t <= T && k.t > T - windowMs) out.push({ at: k.t, k, kind: 'launch', tk, sol: k.dev[0]?.[2] || 0 })
+    for (const tr of k.trades) if (tr[0] <= T && tr[0] > T - windowMs && tr[1] && tr[2] >= 2) out.push({ at: tr[0], k, kind: 'whale', tk, sol: tr[2] })
+    if (k.dsAt && k.dsAt <= T && k.dsAt > T - windowMs) out.push({ at: k.dsAt, k, kind: 'dev', tk, sol: k.dsSol })
+    if (k.gradAt && k.gradAt <= T && k.gradAt > T - windowMs) out.push({ at: k.gradAt, k, kind: 'grad', tk, sol: 0 })
+  }
+  return out.sort((a, b) => b.at - a.at)
+}
+const KIND = {
+  launch: { dot: 'rgba(242,239,232,.85)', what: 'launched' },
+  whale: { dot: '#f3c58a', what: 'big buy' },
+  dev: { dot: '#ff5a4e', what: 'dev sold' },
+  grad: { dot: '#e9c46a', what: 'graduated' },
+}
+const PRI = { dev: 4, grad: 5, whale: 3, launch: 1 }
+
+// ------------------------------------------------------------------ the project's own coin: the landmark in the centre lot.
+// Its state comes from /api/project (dev wallets and lock read on-chain). If the dev bag ever shrinks, it goes dark like any rug.
+const LM = { lot: lots[0], id: '__landmark', seed: .4242, info: { live: false, ticker: PROJECT.ticker, name: PROJECT.name }, raw: { s: PROJECT.ticker } }
+async function pollProject() {
+  try { LM.info = await (await fetch('/api/project', { cache: 'no-store' })).json() } catch {}
+  const t = LM.info.ticker || PROJECT.ticker
+  $('oursTxt').textContent = LM.info.live ? `Our coin · $${t}` : `$${t} · coming soon`
+  if (selected === LM) renderCard(nowT)
+}
+function landmarkParts(T) {
+  const i = LM.info, m = i.market
+  const live = i.live && !i.error
+  const mc = live && m && m.mc ? m.mc : 0
+  const h = live ? Math.max(18, heightFor(mc || 28)) : 30
+  const dark = live && i.devSold ? 1 : 0
+  const lit = live ? (dark ? 0 : .42) : .05
+  return { h, lit, dark, live, mc }
+}
+
+// camera director: a schedule of shots, each a slow orbit; computed from the data so a capture is repeatable
+let shots = []
+function pickShot(t, ahead) {
+  const evs = eventsUpTo(t + ahead, 6000 + ahead).filter((e) => coins.has(e.k.id))
+  evs.sort((a, b) => PRI[b.kind] - PRI[a.kind] || b.sol - a.sol)
+  const pick = evs.find((e) => e.kind !== 'launch' || e.sol >= 1) || null
+  const prev = shots.length ? shots.at(-1).k : null
+  return { at: t, k: pick && pick.k !== prev ? pick.k : (prev ? null : pick?.k ?? null) }
+}
+const shotLen = (sh) => sh.k ? 9000 : 11000
+function planShots(T0, T1) {
+  shots = [{ at: T0, k: null }]
+  let t = T0 + 9000
+  while (t < T1) { const sh = pickShot(t, 4000); shots.push(sh); t += shotLen(sh) }
+}
+function extendShots(T) {               // live: decide the next shot when the current one ends
+  const last = shots.at(-1)
+  if (T >= last.at + shotLen(last)) { const sh = pickShot(T, 0); if (sh.k && !coins.has(sh.k.id)) sh.k = null; shots.push(sh); if (shots.length > 6) shots.shift() }
+}
+function shotPose(sh, T) {
+  const a = (T - sh.at) / 1000
+  if (!sh.k) {
+    const yaw = 0.6 + T / 1000 * 0.016 + hash(String(sh.at)) * 6
+    const R = streetU.cityR.value * 1.55 + 95 - a * 1.5
+    return { pos: new THREE.Vector3(Math.cos(yaw) * R, R * .36 - a * .3, Math.sin(yaw) * R), look: new THREE.Vector3(0, 8, 0) }
+  }
+  const L = sh.k.lot
+  const hh = Math.max(14, heightFor(sh.k.peakMc))
+  const yaw = hash(sh.k.id + 'cam') * 6.283 + a * 0.035
+  const R = 40 + hh * 1.05 - a * .8
+  const pos = new THREE.Vector3(L.x + Math.cos(yaw) * R, 10 + hh * .55 + a * .25, L.z + Math.sin(yaw) * R)
+  for (const o of order) {
+    const so = state.get(o.id); if (!so) continue
+    if (Math.hypot(o.lot.x - pos.x, o.lot.z - pos.z) < 11) pos.y = Math.max(pos.y, so.h + so.y0 + 8)
+  }
+  return { pos, look: new THREE.Vector3(L.x, hh * .45, L.z) }
+}
+function cameraAt(T) {
+  let i = shots.length - 1
+  while (i > 0 && shots[i].at > T) i--
+  const cur = shotPose(shots[i], T)
+  if (i > 0) {
+    const f = ease((T - shots[i].at) / 3200)
+    if (f < 1) { const prev = shotPose(shots[i - 1], T); cur.pos.lerpVectors(prev.pos, cur.pos, f); cur.look.lerpVectors(prev.look, cur.look, f) }
+  }
+  if (shots[i].k && !coins.has(shots[i].k.id)) shots[i].k = null
+  lastPose = cur
+  return { shot: shots[i], pose: cur }
+}
+
+// ------------------------------------------------------------------ free camera (drag / wheel / touch) and the blend back to auto
+let camMode = 'auto', lastPose = null, blendFrom = null, blendAt = 0
+const orbit = { target: new THREE.Vector3(), yaw: 0, pitch: .4, dist: 200, goal: null }
+function poseFromOrbit() {
+  const o = orbit, cp = Math.cos(o.pitch)
+  return { pos: new THREE.Vector3(o.target.x + Math.cos(o.yaw) * cp * o.dist, o.target.y + Math.sin(o.pitch) * o.dist, o.target.z + Math.sin(o.yaw) * cp * o.dist), look: o.target.clone() }
+}
+function enterFree() {
+  if (camMode === 'free' || !lastPose) return
+  camMode = 'free'
+  const d = lastPose.pos.clone().sub(lastPose.look)
+  orbit.target.copy(lastPose.look); orbit.dist = d.length(); orbit.pitch = Math.asin(clamp(d.y / orbit.dist, -1, 1)); orbit.yaw = Math.atan2(d.z, d.x); orbit.goal = null
+  $('auto').style.display = 'block'; $('hint').style.opacity = 0
+}
+function enterAuto() {
+  if (camMode === 'auto') return
+  blendFrom = poseFromOrbit(); blendAt = performance.now(); camMode = 'auto'; $('auto').style.display = 'none'
+}
+function flyTo(k) {
+  enterFree()
+  const hh = k === LM ? landmarkParts(nowT).h + 6 : Math.max(14, heightFor(k.peakMc))
+  orbit.goal = k === LM ? { target: new THREE.Vector3(k.lot.x, hh * .45, k.lot.z), dist: 90 + hh * 1.2, pitch: .78 } : { target: new THREE.Vector3(k.lot.x, hh * .55, k.lot.z), dist: 70 + hh * 1.9, pitch: .26 }
+}
+function stepOrbit(dt) {
+  const g = orbit.goal
+  if (g) {
+    const f = 1 - Math.exp(-dt * 3)
+    orbit.target.lerp(g.target, f); orbit.dist += (g.dist - orbit.dist) * f; orbit.pitch += (g.pitch - orbit.pitch) * f
+    if (orbit.target.distanceTo(g.target) < .05 && Math.abs(g.dist - orbit.dist) < .05) orbit.goal = null
+  }
+  orbit.pitch = clamp(orbit.pitch, .06, 1.45); orbit.dist = clamp(orbit.dist, 18, 700)
+  return poseFromOrbit()
+}
+{
+  const cv = renderer.domElement
+  let down = null, moved = 0, pinch = 0
+  const pts = new Map()
+  cv.addEventListener('pointerdown', (e) => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); down = { x: e.clientX, y: e.clientY, b: e.button, shift: e.shiftKey }; moved = 0 })
+  cv.addEventListener('pointermove', (e) => {
+    if (!pts.has(e.pointerId)) { hoverAt(e.clientX, e.clientY); return }
+    const [px, py] = pts.get(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY])
+    const dx = e.clientX - px, dy = e.clientY - py
+    moved += Math.abs(dx) + Math.abs(dy)
+    if (moved < 4) return
+    enterFree(); orbit.goal = null; cv.classList.add('drag')
+    if (pts.size === 2) {
+      const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1])
+      if (pinch) orbit.dist *= pinch / d
+      pinch = d; return
+    }
+    if (down.b === 2 || down.shift) {           // pan along the ground
+      const s = orbit.dist * .0016, c = Math.cos(orbit.yaw), sn = Math.sin(orbit.yaw)
+      orbit.target.x += (-sn * dx - c * dy) * s * -1; orbit.target.z += (c * dx - sn * dy) * s * -1
+    } else { orbit.yaw += dx * .005; orbit.pitch += dy * .004 }
+  })
+  const up = (e) => {
+    pts.delete(e.pointerId); pinch = 0; cv.classList.remove('drag')
+    if (down && moved < 4 && e.type === 'pointerup' && down.b === 0) pickAt(e.clientX, e.clientY)
+    down = null
+  }
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up)
+  cv.addEventListener('contextmenu', (e) => e.preventDefault())
+  cv.addEventListener('wheel', (e) => { e.preventDefault(); enterFree(); orbit.goal = null; orbit.dist *= Math.exp(e.deltaY * .0012) }, { passive: false })
+  $('auto').addEventListener('click', enterAuto)
+  $('ours').addEventListener('click', () => select(LM))
+}
+
+// picking: a ray into the instanced buildings
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2()
+let hovered = null, selected = null
+function coinAt(x, y) {
+  ndc.set(x / W * 2 - 1, -(y / H) * 2 + 1); ray.setFromCamera(ndc, camera)
+  bmesh.computeBoundingSphere()
+  const hit = ray.intersectObject(bmesh, false)[0]
+  return hit && hit.instanceId != null ? instCoin[hit.instanceId] : null
+}
+function hoverAt(x, y) { hovered = coinAt(x, y); renderer.domElement.classList.toggle('over', !!hovered) }
+function pickAt(x, y) { const k = coinAt(x, y); if (k) select(k); else select(null) }
+function select(k, fly = true) {
+  if (k === LM) { selected = LM; if (fly) flyTo(LM); renderOurCard(); $('card').classList.add('on'); return }
+  selected = k
+  if (!k) { $('card').classList.remove('on'); history.replaceState(null, '', location.pathname + (REPLAY ? location.search : '')); return }
+  if (fly) flyTo(k)
+  if (!REPLAY) history.replaceState(null, '', '?coin=' + k.id)
+  renderCard(nowT); $('card').classList.add('on')
+}
+let cardAt = 0
+function renderCard(T) {
+  const k = selected; if (!k) return
+  if (k === LM) { renderOurCard(); return }
+  cardAt = T
+  const c = k.raw, s = state.get(k.id) || evalCoin(k, T) || { mc: mcAt(k, T) }
+  const tk = k.ticks.filter((x) => x[0] <= T)
+  const first = tk[0]?.[1] || s.mc, chg = (s.mc / first - 1) * 100
+  // sparkline of market cap since launch
+  let spark = ''
+  if (tk.length > 1) {
+    const t0 = tk[0][0], t1 = Math.max(T, t0 + 1), lo = Math.min(...tk.map((x) => x[1])), hi = Math.max(...tk.map((x) => x[1]), s.mc)
+    const X = (t) => ((t - t0) / (t1 - t0) * 286).toFixed(1), Y = (v) => (56 - (Math.log(v) - Math.log(lo)) / Math.max(1e-6, Math.log(hi) - Math.log(lo)) * 50).toFixed(1)
+    const pts = tk.map((x) => X(x[0]) + ',' + Y(x[1])).concat([X(T) + ',' + Y(s.mc)])
+    const col = chg >= 0 ? '#9fd9b5' : '#ef8a80'
+    spark = `<svg width="286" height="60" viewBox="0 0 286 60"><polyline points="${pts.join(' ')}" fill="none" stroke="${col}" stroke-width="1.6" stroke-linejoin="round"/></svg>`
+  }
+  const age = (ms) => { const a = Math.max(0, (T - ms) / 1000); return a < 60 ? Math.floor(a) + 's' : a < 3600 ? Math.floor(a / 60) + 'm' : Math.floor(a / 3600) + 'h' }
+  const devTxt = k.dsAt && k.dsAt <= T ? '<b style="color:var(--red)">Sold</b>' : `<b>${c.dp != null ? (+c.dp).toFixed(1) + '%' : '-'}</b>`
+  const tr = k.trades.filter((x) => x[0] <= T).slice(-5).reverse()
+  const devs = k.dev.filter((x) => x[0] <= T && x[1] === 0).slice(-2)
+  const rows = tr.map((x) => `<div class="tr"><span class="${x[1] ? 'b' : 's'}">${x[1] ? 'Buy' : 'Sell'}</span><span>${fmtSol(x[2])} SOL</span><span>${age(x[0])} ago</span></div>`).join('')
+  const flag = k.gradAt && k.gradAt <= T ? '<div class="flagrow" style="color:var(--gold)">GRADUATED</div>' : k.dsAt && k.dsAt <= T ? '<div class="flagrow" style="color:var(--red)">DEV SOLD</div>' : ''
+  $('card').innerHTML = `<button class="x" id="cx">&times;</button>
+    <div class="tk">$${esc(c.s || '')}</div><div class="nm">${escL(c.n || '')} &middot; launched ${age(k.t)} ago</div>${flag}
+    <div class="mc">${fmtUsd(s.mc * SOL_USD)}</div><div class="chg" style="color:${chg >= 0 ? '#9fd9b5' : '#ef8a80'}">${chg >= 0 ? '+' : ''}${chg.toFixed(0)}% since launch</div>
+    ${spark}
+    <div class="grid"><div><b>${c.h != null ? (+c.h).toLocaleString('en-US') : '-'}</b><span>Holders</span></div><div>${devTxt}<span>Dev holds</span></div><div><b>${c.t10 != null ? (+c.t10).toFixed(1) + '%' : '-'}</b><span>Top 10</span></div></div>
+    <div class="trades">${rows || '<div class="tr"><span>No trades yet</span></div>'}</div>
+    <div class="btns"><a href="https://pump.fun/coin/${encodeURIComponent(k.id)}" target="_blank" rel="noopener">View on pump.fun</a><button id="cca">Copy CA</button></div>`
+  $('cx').onclick = () => select(null)
+  $('cca').onclick = () => { navigator.clipboard?.writeText(k.id); $('cca').textContent = 'Copied' }
+}
+function renderOurCard() {
+  const i = LM.info, m = i.market, short = (a) => a ? a.slice(0, 4) + '…' + a.slice(-4) : ''
+  let body
+  if (!i.live) {
+    body = `<div class="mc" style="font-size:22px">Not launched yet</div>
+      <div class="rule"><b>Our rule:</b> this tower is our own coin. Its dev wallet is shown here, read live from the chain. If the dev bag ever drops below its launch size, other than into the public lock, the tower goes dark for everyone, exactly like the rugs around it.</div>
+      <div class="rule">The dev share will be time-locked, with the public lock linked here.</div>`
+  } else if (i.error) {
+    body = `<div class="rule">Reading the chain… (${escL(i.error)})</div>`
+  } else {
+    const rows = (i.wallets || []).map((w) => `<div class="wal"><a href="https://solscan.io/account/${encodeURIComponent(w.address)}" target="_blank" rel="noopener">${w.label} ${short(w.address)}</a><span>${w.pct.toFixed(2)}%</span></div>`).join('')
+    const lock = i.lock && i.lock.url ? `<div class="wal"><a href="${encodeURI(i.lock.url)}" target="_blank" rel="noopener">Lock contract</a><span>${i.lockedPct.toFixed(2)}% until ${escL(i.lock.until)}</span></div>` : '<div class="wal"><span>Lock</span><span>not set yet</span></div>'
+    body = `<div class="mc">${m && m.mc ? fmtUsd(m.mc * SOL_USD) : '-'}</div>
+      <div class="grid"><div><b>${m && m.h != null ? (+m.h).toLocaleString('en-US') : '-'}</b><span>Holders</span></div><div><b>${i.devPct.toFixed(2)}%</b><span>Dev holds</span></div><div><b class="${i.devSold ? 'bad' : 'ok'}">${i.devSold ? 'Sold' : 'Never'}</b><span>Dev sold</span></div></div>
+      <div class="sect">Dev wallets, read on-chain</div>${rows}${lock}
+      <div class="rule"><b>Our rule:</b> ${escL(i.rule).length ? i.rule : ''}</div>
+      <div class="btns"><a href="https://pump.fun/coin/${encodeURIComponent(i.mint)}" target="_blank" rel="noopener">View on pump.fun</a><button id="cca">Copy CA</button></div>`
+  }
+  $('card').innerHTML = `<button class="x" id="cx">&times;</button><div class="tk">$${esc(i.ticker || PROJECT.ticker)}</div><div class="nm">${escL(i.name || PROJECT.name)} &middot; the city's own coin</div>
+    ${i.live ? (i.devSold ? '<div class="flagrow" style="color:var(--red)">DEV SOLD</div>' : '<div class="flagrow" style="color:#cfe0ff">DEV HAS NEVER SOLD</div>') : ''}${body}`
+  $('cx').onclick = () => select(null)
+  if ($('cca')) $('cca').onclick = () => { navigator.clipboard?.writeText(i.mint); $('cca').textContent = 'Copied' }
+}
+const escL = (s) => clean(String(s)).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).slice(0, 40)
+// search: a contract address or a ticker
+$('q').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return
+  const v = $('q').value.trim().replace(/^\$/, ''); if (!v) return
+  const k = coins.get(v) || [...coins.values()].filter((x) => (x.raw.s || '').toLowerCase() === v.toLowerCase()).sort((a, b) => b.t - a.t)[0]
+  $('qmsg').textContent = k ? '' : 'Not in the city right now.'
+  if (k) { select(k); $('q').blur() }
+})
+
+// ------------------------------------------------------------------ overlay
+let nowT = 0
+function updateUI(T, shot) {
+  const d = new Date(T)
+  $('time').textContent = d.toISOString().slice(11, 19) + ' UTC'
+  let launched = 0, devs = 0, vol = 0
+  for (const k of order) {
+    if (k.t <= T) launched++
+    if (k.dsAt && k.dsAt <= T) devs++
+    const s = state.get(k.id); if (s) vol += s.vol
+  }
+  $('warm').style.opacity = !REPLAY && launched < 3 ? 1 : 0; $('stats').style.opacity = launched ? 1 : 0
+  $('sLaunch').textContent = launched.toLocaleString('en-US'); $('sDev').textContent = devs; $('sVol').textContent = Math.round(vol).toLocaleString('en-US')
+  // log: the latest notable events, newest at the bottom, each fading after 14 s
+  const evs = eventsUpTo(T, 16000).filter((e) => e.kind !== 'launch' || e.sol >= .5).slice(0, 4).reverse()
+  $('log').innerHTML = evs.map((e) => {
+    const a = (T - e.at) / 1000, op = clamp(a / .35) * clamp((16 - a) / 2)
+    const amt = e.kind === 'grad' ? '' : fmtSol(e.sol) + ' SOL'
+    return `<div class="ev" style="opacity:${op.toFixed(3)};transform:translateY(${((1 - clamp(a / .35)) * 8).toFixed(1)}px)"><span class="dot" style="background:${KIND[e.kind].dot}"></span><span class="tk">$${esc(e.tk)}</span><span class="what">${KIND[e.kind].what}</span><span class="amt">${amt}</span></div>`
+  }).join('')
+  // tags: the shot's building + buildings with something happening right now (max 4)
+  const live = eventsUpTo(T, 7000).filter((e) => e.kind !== 'launch')
+  const set = new Map()
+  set.set(LM.id, { k: LM, kind: LM.info.live ? (LM.info.devSold ? 'dev' : 'ours') : 'soon' })
+  for (const k of [selected, hovered, camMode === 'auto' ? shot.k : null]) if (k && !set.has(k.id)) set.set(k.id, { k, kind: live.find((e) => e.k === k)?.kind })
+  for (const e of live) if (set.size < 4 && !set.has(e.k.id)) set.set(e.k.id, { k: e.k, kind: e.kind, at: e.at })
+  const html = []
+  for (const { k, kind, at } of set.values()) {
+    const s = state.get(k.id); if (!s) continue
+    tmpV.set(k.lot.x, s.h * s.rise + Math.max(0, s.y0) + 2, k.lot.z).project(camera)
+    if (tmpV.z > 1 || Math.abs(tmpV.x) > .92 || Math.abs(tmpV.y) > .85) continue
+    const x = (tmpV.x * .5 + .5) * W, y = (-tmpV.y * .5 + .5) * H
+    const op = at ? clamp((7000 - (T - at)) / 1200) * clamp((T - at) / 400) : 1
+    const flag = kind === 'ours' ? `<div class="flag" style="color:#cfe0ff">OUR COIN</div>` : kind === 'soon' ? `<div class="flag" style="color:var(--dim)">COMING SOON</div>` : kind === 'dev' ? `<div class="flag" style="color:var(--red)">DEV SOLD</div>` : kind === 'grad' ? `<div class="flag" style="color:var(--gold)">GRADUATED</div>` : kind === 'whale' ? `<div class="flag" style="color:var(--warm)">BIG BUY</div>` : ''
+    html.push(`<div class="tag" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;opacity:${op.toFixed(3)}"><div class="t">$${esc(k.raw.s || '')}</div><div class="m">${k === LM && !LM.info.live ? 'Not launched yet' : fmtUsd(s.mc * SOL_USD)}</div>${flag}<div class="stem"></div></div>`)
+  }
+  $('tags').innerHTML = html.join('')
+}
+const BAD = /(j[e3]w|n[i1]gg|f[a@]gg|r[e3]tard|k[i1]ke|ch[i1]nk|sp[i1]c\b|tr[a@]nny|c[u\*]nt|wh[o0]re|sl[u\*]t|p[o0]rn|c[o0]ck|p[u\*]ssy|d[i1]ck|t[i1]ts\b|b[o0]{2}bs|cum|r[a@]pe|h[i1]tler|n[a@]zi)/gi
+const clean = (s) => String(s).replace(BAD, (m) => m[0] + '•'.repeat(m.length - 1))
+const esc = (s) => clean(String(s)).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).slice(0, 14)
+
+function updateRain(T) {
+  const p = rainGeo.attributes.position.array, c = camera.position, t = T / 1000
+  for (let i = 0; i < RAIN_N; i++) {
+    const x = c.x + (rainSeed[i * 3] - .5) * 90, z = c.z + (rainSeed[i * 3 + 2] - .5) * 90
+    const y = c.y + 30 - ((rainSeed[i * 3 + 1] * 60 + t * 38) % 60)
+    p[i * 6] = x; p[i * 6 + 1] = y; p[i * 6 + 2] = z; p[i * 6 + 3] = x + .1; p[i * 6 + 4] = y - 1.1; p[i * 6 + 5] = z + .05
+  }
+  rainGeo.attributes.position.needsUpdate = true
+}
+
+let lastFrame = performance.now()
+function frame(T, t) {
+  nowT = T
+  const now = performance.now(), dt = Math.min(.1, (now - lastFrame) / 1000); lastFrame = now
+  updateCity(T)
+  if (!REPLAY) extendShots(T)
+  const { shot, pose } = cameraAt(T)
+  let use = pose
+  if (camMode === 'free') use = stepOrbit(dt)
+  else if (blendFrom) {
+    const f = ease((now - blendAt) / 2600)
+    if (f >= 1) blendFrom = null
+    else use = { pos: blendFrom.pos.clone().lerp(pose.pos, f), look: blendFrom.look.clone().lerp(pose.look, f) }
+  }
+  lastPose = use
+  camera.position.copy(use.pos); camera.lookAt(use.look)
+  if (selected && selected !== LM && T - cardAt > 1000) { if (coins.has(selected.id)) renderCard(T); else select(null) }
+  updateRain(T)
+  grade.uniforms.t.value = t % 100
+  composer.render()
+  updateUI(T, shot)
+}
+addEventListener('resize', () => {
+  W = innerWidth; H = innerHeight; renderer.setSize(W, H); composer.setSize(W, H); camera.aspect = W / H; camera.updateProjectionMatrix()
+})
+
+// ------------------------------------------------------------------ modes
+if (REPLAY) {
+  document.body.classList.add('capture')
+  $('oursTxt').textContent = PROJECT.ticker
+  const d = await (await fetch(REPLAY)).json()
+  if (d.solUsd) SOL_USD = d.solUsd
+  d.coins.sort((a, b) => a.t - b.t).forEach(addCoin)
+  const T0 = d.start + FROM * 1000
+  window.DURATION = +(Q.get('dur') || 30)
+  planShots(T0, T0 + window.DURATION * 1000 * SPEED + 20000)
+  window.renderFrame = (t) => frame(T0 + t * 1000 * SPEED, t)
+  // for the capture tools: every event in the clip (clip seconds), and the most eventful window in the recording
+  window.clipEvents = () => {
+    const out = [], T1 = T0 + window.DURATION * 1000 * SPEED, sec = (x) => (x - T0) / 1000 / SPEED
+    for (const k of order) {
+      if (k.t >= T0 && k.t < T1) out.push({ t: sec(k.t), kind: 'launch', sol: k.dev[0]?.[2] || 0 })
+      for (const tr of k.trades) if (tr[0] >= T0 && tr[0] < T1 && tr[1]) out.push({ t: sec(tr[0]), kind: tr[2] >= 2 ? 'whale' : 'buy', sol: tr[2] })
+      if (k.dsAt && k.dsAt >= T0 && k.dsAt < T1) out.push({ t: sec(k.dsAt), kind: 'dev', sol: k.dsSol, collapse: !!k.collapse })
+      if (k.gradAt && k.gradAt >= T0 && k.gradAt < T1) out.push({ t: sec(k.gradAt), kind: 'grad', sol: 0 })
+    }
+    const buys = out.filter((e) => e.kind === 'buy').sort((a, b) => b.sol - a.sol).slice(0, 40)
+    return { dur: window.DURATION, events: out.filter((e) => e.kind !== 'buy').concat(buys).sort((a, b) => a.t - b.t) }
+  }
+  window.bestFrom = (len) => {
+    let best = 0, bestS = -1
+    for (let f = 60; f < (d.now - d.start) / 1000 - len; f += 5) {
+      const a = d.start + f * 1000, b = a + len * 1000; let sc = 0
+      for (const k of order) {
+        if (k.t >= a && k.t < b) sc += 1
+        for (const tr of k.trades) if (tr[0] >= a && tr[0] < b && tr[1] && tr[2] >= 2) sc += 2
+        if (k.dsAt && k.dsAt >= a && k.dsAt < b) sc += k.collapse ? 5 : 2
+        if (k.gradAt && k.gradAt >= a && k.gradAt < b) sc += 8
+      }
+      if (sc > bestS) { bestS = sc; best = f }
+    }
+    return { from: best, score: bestS }
+  }
+  window.renderFrame(0)
+  window.READY = true
+} else {
+  // live: poll the relay every 3 s; collapsed buildings are cleared after a minute and the city keeps at most 450
+  let skew = 0, fails = 0
+  const poll = async () => {
+    try {
+      const d = await (await fetch(FEED, { cache: 'no-store' })).json()
+      skew = d.now - Date.now(); fails = 0
+      d.coins.forEach(addCoin)
+      const T = Date.now() + skew
+      for (const k of [...order]) if (k.dsAt && k.collapse && T - k.dsAt > 70000 && k !== selected) dropCoin(k)
+      if (order.length > 450) [...order].sort((a, b) => (a.trades.at(-1)?.[0] || a.t) - (b.trades.at(-1)?.[0] || b.t)).slice(0, order.length - 450).forEach((k) => k !== selected && dropCoin(k))
+      document.querySelector('#clock .live').innerHTML = '<i></i>LIVE'
+    } catch (e) { if (++fails > 2) document.querySelector('#clock .live').innerHTML = '<i style="background:#888"></i>RECONNECTING' }
+  }
+  await poll(); setInterval(poll, 3000)
+  pollProject(); setInterval(pollProject, 20000)
+  const T0 = Date.now() + skew
+  shots = [{ at: T0 - 2000, k: null }]
+  window.TC = { coins, select: (id) => select(coins.get(id)), top: () => [...coins.values()].sort((a, b) => (state.get(b.id)?.mc || 0) - (state.get(a.id)?.mc || 0))[0]?.id }
+  const want = Q.get('coin')
+  if (want && coins.has(want)) setTimeout(() => select(coins.get(want)), 600)
+  setTimeout(() => { $('hint').style.opacity = 0 }, 9000)
+  const loop = () => { const T = Date.now() + skew; frame(T, performance.now() / 1000); requestAnimationFrame(loop) }
+  loop()
+  window.READY = true
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+data/
+frames/
+stills/
+out/
+*.wav
+*.mp4
+*.log
+collect.py
+render.mjs
+serve.mjs
+sound.mjs
+events.json
+city_capture_backup.html
+README.md
